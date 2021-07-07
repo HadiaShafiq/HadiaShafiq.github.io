@@ -5,12 +5,17 @@
 		<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@526&display=swap" rel="stylesheet">
 		<link rel="preconnect" href="https://fonts.gstatic.com">
 		<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda&display=swap" rel="stylesheet">
-		<title>X Report</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<link href="https://fonts.googleapis.com/css2?family=Calligraffitti&display=swap" rel="stylesheet">
+		<!--for excel sheet!-->
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/xlsx.full.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/jszip.js"></script>
 		
+		<title>X Report</title>
 	</head>
 	<style>
 		#main{
-			padding:10%;
+			margin-top:5%;
 			font-size: 150%;
 			font-family: 'Bodoni Moda', serif;
 		}
@@ -31,22 +36,223 @@
 			cursor: pointer;
 			margin-right:10%;
 			margin-left:10%;
-			
+		}
+		#file-selected{
+			font-family: 'Calligraffitti', cursive;
+		}
+		#search-btn{
+			border-radius:28px;
+			padding-left:5%;
+			padding-right:5%;
+			cursor: pointer;
+			border:2% solid #E86524;
+			background-color:#ed9121;
+		}
+		#search-btn:active {
+			background-color:#e25822;
+		}
+		#dataTbl{
+			border-collapse: collapse;
+		}
+		td {
+			border: 1px gray solid;
+			padding: 4px;
+			width: 5em;
 		}
 	</style>
-	<body>
+	<body>Inventory List
 		<h1 id="logo" class="text-center">X-Report</h1>
+		<hr size="10"/>
 		<div id="main" class="text-center">
-			<label>Chose an Excel File: </label>
-			<label for="file-upload" class="custom-file-upload">
-			<i class="fa fa-cloud-upload"></i> Browse
-		</label>
-		<input id="file-upload" type="file"accept=".xls,.xlsx" class="upload"/>
+			<div  class="row">
+				<div class="col-sm-4"><label>Chose an Excel File: </label></div>
+				<div class="col-sm-4">
+					<label for="file-upload" class="custom-file-upload">
+						<i class="fa fa-cloud-upload"></i> Browse
+						<input id="file-upload" type="file" accept=".xls,.xlsx" required />
+					</label>
+				</div>
+				<div class="col-sm-4">
+					<span id="file-selected"></span>
+				</div>
+			</div>
+			
+			<br/>
+			<div  class="row">
+				<div class="col-sm-4"><label  id="sheet-lbl">Chose a Sheet Name: </label></div>
+				<div class="col-sm-4"><input id="sheet-no" required type="text" placeholder="Sheet Name"/></div>
+			</div>
+			
+			<br/>			
+			<div class="row">
+				<div class="col-sm-4"><label id="search-lbl">Search</label></div>
+				<div class="col-sm-4"><input id="search-tb" type="text" placeholder="Type To Search" required /></div>
+				<div class="col-sm-4"><button id="search-btn" class="button btn-primary" onclick="search()"> Search</button></div>
+			</div>
+		</div>	
+		<hr/>
+		<button class="button btn-primary" id="export"> Create Report</button>
 		
+		<div id="docx">
+			<div class="WordDoc">
+				<table id="dataTbl" class="table-responsive">
+				</table>
+			</div>
 		</div>
-		
 		
 	</body>
 	
+	<script>
+		$('#export').css('visibility', 'hidden'); 
+		var xcelData;
+		$("#file-upload").bind("change", function(){
+			var fileName = ''; 
+			fileName = $(this).val(); 
+			$('#file-selected').html(fileName.replace("C:\\fakepath\\", ""));
+		});
+		async function search(){alert("1");
+			$('#export').css('visibility', 'hidden'); 
+			if(document.getElementById("file-upload").files.length == 0 ){
+				alert("File Not Selected");
+			}else if($('#sheet-no').val().length === 0){
+				alert("Sheet Name Not Selected");
+			}else if($('#search-tb').val().length === 0){
+				alert("Text Not Selected");
+			}else{
+				$("#dataTbl").html("");
+				var flag = await(checkSheet());alert("4");
+				if(flag){
+					searchTxt();
+				}else{
+					alert("Sheet not found");
+				}
+			}
+		}
+		function checkSheet(fileUpload){
+			 return new Promise((resolve, reject) => {alert("2");
+				var fileUpload = $("#file-upload")[0];
+				var reader = new FileReader();
+				var flag=false;
+				fileUpload.value.toLowerCase();alert("2.1");
+				//file reader onload function is an asynchronous function so we wait for promise.
+				if (reader.readAsBinaryString) {alert("2.2");
+					reader.onload = function (e) {alert("2.2.1");
+						data= e.target.result;alert("2.2.2");
+						//reading excel file in binary format
+						var workbook = XLSX.read(data, {
+							type: 'binary'
+						});alert("2.3");
+						xcelData=data;
+						//checking if sheet exists
+						for (let x of workbook.SheetNames){
+							if(x===$('#sheet-no').val()){
+								flag=true; 
+							}
+						}alert("2.4");
+						resolve(flag);
+					}
+					reader.readAsBinaryString(fileUpload.files[0]);
+				}
+			}).then(function(result) {alert("3");
+				return result;
+			});			
+		}
+		function searchTxt(){	alert("5");
+			var workbook = XLSX.read(xcelData, {
+				type: 'binary'
+			});
+			var json_object;
+			var sheetName =$('#sheet-no').val();
+			var txt=$('#search-tb').val();
+			var NoOfRows=0;
+		//	workbook.SheetNames.forEach(function(sheetName) { //if we want to check in aLL sheets we use this for Loop
+				// Here is your object
+				var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+				json_object = JSON.stringify(XL_row_object);// Converting JSON-encoded string to JS object
+				var jsonObj = JSON.parse(json_object);
+				if(Object.keys(jsonObj).length!=0){
+					var objKeys = Object.keys(jsonObj[0]);
+					for(var i = 0; i < jsonObj.length; i++)
+					{
+						for(var j = 0; j < objKeys.length; j++){
+							//console.log(jsonObj[i][objKeys[j]]);
+							if(txt==jsonObj[i][objKeys[j]]){
+								getRow(i,jsonObj,NoOfRows);
+								NoOfRows++;
+							}
+						}
+					}alert("6");
+				}else{
+					alert("Sheet is empty");
+				} alert($("#dataTbl").html());//console.log($("#dataTbl").html());
+		//	});
+		}
+		function getRow(row,jsonObj,NoOfRows){alert("7");
+			$('#export').css('visibility', 'visible'); 
+			var objKeys = Object.keys(jsonObj[0]);
+			var objValue = Object.values(jsonObj[row]);
+			// add table header
+			$("#dataTbl").append("<tr>");
+			if(NoOfRows==0){
+				for(var j = 0; j < objKeys.length; j++){
+					$("#dataTbl").append("<td><b>"+objKeys[j]+"</b></td>");
+				}
+			}
+			//$("#dataTbl").append("</tr>");
+			// add table rows
+			$("#dataTbl").append("<tr>");
+			for(var j = 0; j < objKeys.length; j++){
+				//adding row in a table
+				$("#dataTbl").append("<td>"+objValue[j]+"</td>");
+			}		
+			$("#dataTbl").append("</tr>");
+		}
+		
+		/* HTML to Microsoft Word Export Demo 
+		* This code demonstrates how to export an html element to Microsoft Word
+		* with CSS styles to set page orientation and paper size.
+		* Tested with Word 2010, 2013 and FireFox, Chrome, Opera, IE10-11
+		* Fails in legacy browsers (IE<10) that lack window.Blob object
+		code from https://stackoverflow.com/questions/36330859/export-html-table-as-word-file-and-change-file-orientation/36337284
+		*/
+		
+		window.export.onclick = function() {
+			if (!window.Blob) {
+				alert('Your legacy browser does not support this action.');
+			return;
+			}
+			var html, link, blob, url, css;
+			// EU A4 use: size: 841.95pt 595.35pt;
+			// US Letter use: size:11.0in 8.5in; 
+			css = (
+				'<style>' +
+				'@page WordDoc{size: 841.95pt 595.35pt;mso-page-orientation: landscape ;}' +
+				'div.WordDoc {page: WordDoc;}' +
+				' td{border:1px gray solid;width:5em;padding:2px;}'+
+				'</style>'
+			);
+			html = window.docx.innerHTML;
+			blob = new Blob(['\ufeff', html], {
+				type: 'application/msword'
+			});
+			url = URL.createObjectURL(blob);
+			link = document.createElement('A');
+			link.href = url;
+			// Set default file name. 
+			// Word will append file extension - do not add an extension here.
+			link.download = 'Report';   
+			document.body.appendChild(link);
+			if (navigator.msSaveOrOpenBlob ) navigator.msSaveOrOpenBlob( blob, 'Document.doc'); // IE10-11
+			else link.click();  // other browsers
+			document.body.removeChild(link);
+		};	
+		
+	</script>
 	
-</html>
+</html> 
+
+<!--
+ anti pattern promise: using awiat inside a promise?? 
+ https://stackoverflow.com/questions/8238407/how-to-parse-excel-xls-file-in-javascript-html5
+-->
+ 
