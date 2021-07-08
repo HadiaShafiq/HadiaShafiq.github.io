@@ -94,7 +94,7 @@
 		<button class="button btn-primary" id="export"> Create Report</button>
 		
 		<div id="docx">
-			<div class="WordDoc">
+			<div class="WordDoc center">
 				<table id="dataTbl" class="table-responsive">
 				</table>
 			</div>
@@ -110,7 +110,7 @@
 			fileName = $(this).val(); 
 			$('#file-selected').html(fileName.replace("C:\\fakepath\\", ""));
 		});
-		async function search(){alert("1");
+		async function search(){
 			$('#export').css('visibility', 'hidden'); 
 			if(document.getElementById("file-upload").files.length == 0 ){
 				alert("File Not Selected");
@@ -120,44 +120,47 @@
 				alert("Text Not Selected");
 			}else{
 				$("#dataTbl").html("");
-				var flag = await(checkSheet());alert("4");
+				var flag = await(checkSheet());
 				if(flag){
 					searchTxt();
+					if($("#dataTbl").val()==""){
+						alert("Text not found");
+					}
 				}else{
 					alert("Sheet not found");
 				}
 			}
 		}
 		function checkSheet(fileUpload){
-			 return new Promise((resolve, reject) => {alert("2");
+			 return new Promise((resolve, reject) => {
 				var fileUpload = $("#file-upload")[0];
 				var reader = new FileReader();
 				var flag=false;
-				fileUpload.value.toLowerCase();alert("2.1");
+				fileUpload.value.toLowerCase();
 				//file reader onload function is an asynchronous function so we wait for promise.
-				if (reader.readAsBinaryString) {alert("2.2");
-					reader.onload = function (e) {alert("2.2.1");
-						data= e.target.result;alert("2.2.2");
+				if (reader.readAsBinaryString) {
+					reader.onload = function (e) {
+						data= e.target.result;
 						//reading excel file in binary format
 						var workbook = XLSX.read(data, {
 							type: 'binary'
-						});alert("2.3");
+						});
 						xcelData=data;
 						//checking if sheet exists
 						for (let x of workbook.SheetNames){
 							if(x===$('#sheet-no').val()){
 								flag=true; 
 							}
-						}alert("2.4");
+						}
 						resolve(flag);
 					}
 					reader.readAsBinaryString(fileUpload.files[0]);
 				}
-			}).then(function(result) {alert("3");
+			}).then(function(result) {
 				return result;
 			});			
 		}
-		function searchTxt(){	alert("5");
+		function searchTxt(){
 			var workbook = XLSX.read(xcelData, {
 				type: 'binary'
 			});
@@ -170,7 +173,7 @@
 				var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
 				json_object = JSON.stringify(XL_row_object);// Converting JSON-encoded string to JS object
 				var jsonObj = JSON.parse(json_object);
-				if(Object.keys(jsonObj).length!=0){
+				if(Object.keys(jsonObj).length!=0){ console.log(jsonObj);
 					var objKeys = Object.keys(jsonObj[0]);
 					for(var i = 0; i < jsonObj.length; i++)
 					{
@@ -181,31 +184,28 @@
 								NoOfRows++;
 							}
 						}
-					}alert("6");
+					}
 				}else{
 					alert("Sheet is empty");
-				} alert($("#dataTbl").html());//console.log($("#dataTbl").html());
+				}
 		//	});
 		}
-		function getRow(row,jsonObj,NoOfRows){alert("7");
+		function getRow(row,jsonObj,NoOfRows){
 			$('#export').css('visibility', 'visible'); 
 			var objKeys = Object.keys(jsonObj[0]);
 			var objValue = Object.values(jsonObj[row]);
 			// add table header
-			$("#dataTbl").append("<tr>");
 			if(NoOfRows==0){
 				for(var j = 0; j < objKeys.length; j++){
 					$("#dataTbl").append("<td><b>"+objKeys[j]+"</b></td>");
 				}
 			}
-			//$("#dataTbl").append("</tr>");
+			$("#dataTbl").append("<tr><td></td></tr>");
 			// add table rows
-			$("#dataTbl").append("<tr>");
 			for(var j = 0; j < objKeys.length; j++){
 				//adding row in a table
 				$("#dataTbl").append("<td>"+objValue[j]+"</td>");
 			}		
-			$("#dataTbl").append("</tr>");
 		}
 		
 		/* HTML to Microsoft Word Export Demo 
@@ -232,7 +232,7 @@
 				'</style>'
 			);
 			html = window.docx.innerHTML;
-			blob = new Blob(['\ufeff', html], {
+			blob = new Blob(['\ufeff', css + html], {
 				type: 'application/msword'
 			});
 			url = URL.createObjectURL(blob);
