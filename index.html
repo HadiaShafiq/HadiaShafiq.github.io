@@ -52,9 +52,11 @@
 			background-color:#e25822;
 		}
 		#dataTbl{
-			border-collapse: collapse;
+			border: 1px solid black;
+			margin-left: auto; 
+			margin-right: auto;
 		}
-		td {
+		td{
 			border: 1px gray solid;
 			padding: 4px;
 			width: 5em;
@@ -93,11 +95,9 @@
 		<hr/>
 		<button class="button btn-primary" id="export"> Create Report</button>
 		
-		<div id="docx">
-			<div class="WordDoc center">
-				<table id="dataTbl" class="table-responsive">
-				</table>
-			</div>
+		<div id="docx" class="center">
+			<table id="dataTbl" class="WordDoc">
+			</table>
 		</div>
 		
 	</body>
@@ -105,6 +105,7 @@
 	<script>
 		$('#export').css('visibility', 'hidden'); 
 		var xcelData;
+		var sheet_name;
 		$("#file-upload").bind("change", function(){
 			var fileName = ''; 
 			fileName = $(this).val(); 
@@ -148,7 +149,8 @@
 						xcelData=data;
 						//checking if sheet exists
 						for (let x of workbook.SheetNames){
-							if(x===$('#sheet-no').val()){
+							if( x.toLowerCase() === ($('#sheet-no').val().toLowerCase()) ){
+								sheet_name=x;
 								flag=true; 
 							}
 						}
@@ -165,24 +167,30 @@
 				type: 'binary'
 			});
 			var json_object;
-			var sheetName =$('#sheet-no').val();
-			var txt=$('#search-tb').val();
+			var txt=$('#search-tb').val().toLowerCase();
 			var NoOfRows=0;
 		//	workbook.SheetNames.forEach(function(sheetName) { //if we want to check in aLL sheets we use this for Loop
 				// Here is your object
-				var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+				var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheet_name]);
 				json_object = JSON.stringify(XL_row_object);// Converting JSON-encoded string to JS object
 				var jsonObj = JSON.parse(json_object);
 				if(Object.keys(jsonObj).length!=0){
-					var objKeys = Object.keys(jsonObj[0]);
-					for(var i = 0; i < jsonObj.length; i++)
+					var objKeys = Object.keys(jsonObj);
+					for(var i = 0; i < objKeys.length; i++)
 					{
-						for(var j = 0; j < objKeys.length; j++){
-							//console.log(jsonObj[i][objKeys[j]]);
-							if(txt==jsonObj[i][objKeys[j]]){
+						var objValue = Object.values(jsonObj[i]);
+						var str;
+						for(var j = 0; j < objValue.length; j++){
+							str=objValue[j].toLowerCase();
+							if(str.includes(txt)){
+								console.log(str);
 								getRow(i,jsonObj,NoOfRows);
 								NoOfRows++;
 							}
+							<!-- if(txt==jsonObj[i][objKeys[j]]){ -->
+								<!-- getRow(i,jsonObj,NoOfRows); -->
+								<!-- NoOfRows++; -->
+							<!-- } -->
 						}
 					}
 				}else{
@@ -200,12 +208,12 @@
 					$("#dataTbl").append("<td><b>"+objKeys[j]+"</b></td>");
 				}
 			}
-			$("#dataTbl").append("<tr><td></td></tr>");
+			$("#dataTbl").append("<tr style='padding:0%;'><td></td></tr>");
 			// add table rows
 			for(var j = 0; j < objKeys.length; j++){
 				//adding row in a table
 				$("#dataTbl").append("<td>"+objValue[j]+"</td>");
-			}		
+			}			
 		}
 		
 		/* HTML to Microsoft Word Export Demo 
@@ -226,9 +234,9 @@
 			// US Letter use: size:11.0in 8.5in; 
 			css = (
 				'<style>' +
-				'@page WordDoc{size: 841.95pt 595.35pt;mso-page-orientation: landscape ;}' +
+				'@page WordDoc{size: 841.95pt 595.35pt;mso-page-orientation: portrait;}' +
 				'div.WordDoc {page: WordDoc;}' +
-				' td{border:1px gray solid;width:5em;padding:2px;}'+
+				'table{border-collapse:collapse;}td{border:1px gray solid;width:5em;padding:2px;}'+
 				'</style>'
 			);
 			html = window.docx.innerHTML;
