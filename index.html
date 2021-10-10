@@ -203,12 +203,14 @@
 			var objKeys = Object.keys(jsonObj[0]);
 			var objValue = Object.values(jsonObj[row]);
 			// add table header
-			if(NoOfRows==0){
-				for(var j = 0; j < objKeys.length; j++){
-					$("#dataTbl").append("<td><b>"+objKeys[j]+"</b></td>");
-				}
-			}
-			$("#dataTbl").append("<tr style='padding:0%;'><td></td></tr>");
+			//if(NoOfRows==0){
+			//	for(var j = 0; j < objKeys.length; j++){
+			//		$("#dataTbl").append("<td><b>"+objKeys[j]+"</b></td>");
+			//	}
+			//}
+			//table header is not being added because it is assumed that column heading is in the first row but if it is in another row after some headings it will not get correct data.
+	
+			$("#dataTbl").append("<tr style='padding:0%;'></tr>");
 			// add table rows
 			for(var j = 0; j < objKeys.length; j++){
 				//adding row in a table
