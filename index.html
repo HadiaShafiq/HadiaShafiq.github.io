@@ -10,58 +10,12 @@
 		<!--for excel sheet!-->
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/xlsx.full.min.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/jszip.js"></script>
-		
+		<!--for css!-->
+		 <link rel="stylesheet" href="style.css">
+		<!--for js files!-->
+		<script src="script.js"></script>  
 		<title>X Report</title>
 	</head>
-	<style>
-		#main{
-			margin-top:5%;
-			font-size: 150%;
-			font-family: 'Bodoni Moda', serif;
-		}
-		#logo{
-			font-family: 'Dancing Script', cursive;
-			font-size: 500%;
-			padding-top:2%;
-			color: #FF6600;
-		}
-		input[type="file"] {
-			display: none;
-			padding-left:5%;
-		}
-		.custom-file-upload {
-			border: 1px solid #ccc;
-			display: inline-block;
-			padding: 0.5%;
-			cursor: pointer;
-			margin-right:10%;
-			margin-left:10%;
-		}
-		#file-selected{
-			font-family: 'Calligraffitti', cursive;
-		}
-		#search-btn{
-			border-radius:28px;
-			padding-left:5%;
-			padding-right:5%;
-			cursor: pointer;
-			border:2% solid #E86524;
-			background-color:#ed9121;
-		}
-		#search-btn:active {
-			background-color:#e25822;
-		}
-		#dataTbl{
-			border: 1px solid black;
-			margin-left: auto; 
-			margin-right: auto;
-		}
-		td{
-			border: 1px gray solid;
-			padding: 4px;
-			width: 5em;
-		}
-	</style>
 	<body>
 		<h1 id="logo" class="text-center">X-Report</h1>
 		<hr size="10"/>
@@ -69,7 +23,7 @@
 			<div  class="row">
 				<div class="col-sm-4"><label>Chose an Excel File: </label></div>
 				<div class="col-sm-4">
-					<label for="file-upload" class="custom-file-upload">
+					<label for="file-upload" id="" class="custom-file-upload">
 						<i class="fa fa-cloud-upload"></i> Browse
 						<input id="file-upload" type="file" accept=".xls,.xlsx" required />
 					</label>
@@ -93,7 +47,7 @@
 			</div>
 		</div>	
 		<hr/>
-		<button class="button btn-primary" id="export"> Create Report</button>
+		<button class="button btn-primary" onclick="createReport()" id="export"> Create Report</button>
 		
 		<div id="docx" class="center">
 			<table id="dataTbl" class="WordDoc">
@@ -102,162 +56,6 @@
 		
 	</body>
 	
-	<script>
-		$('#export').css('visibility', 'hidden'); 
-		var xcelData;
-		var sheet_name;
-		$("#file-upload").bind("change", function(){
-			var fileName = ''; 
-			fileName = $(this).val(); 
-			$('#file-selected').html(fileName.replace("C:\\fakepath\\", ""));
-		});
-		async function search(){
-			$('#export').css('visibility', 'hidden'); 
-			if(document.getElementById("file-upload").files.length == 0 ){
-				alert("File Not Selected");
-			}else if($('#sheet-no').val().length === 0){
-				alert("Sheet Name Not Selected");
-			}else if($('#search-tb').val().length === 0){
-				alert("Text Not Selected");
-			}else{
-				$("#dataTbl").html("");
-				var flag = await(checkSheet());
-				if(flag){
-					searchTxt();
-					if($("#dataTbl tr").length==""){
-						alert("Text not found");
-					}
-				}else{
-					alert("Sheet not found");
-				}
-			}
-		}
-		function checkSheet(fileUpload){
-			 return new Promise((resolve, reject) => {
-				var fileUpload = $("#file-upload")[0];
-				var reader = new FileReader();
-				var flag=false;
-				fileUpload.value.toLowerCase();
-				//file reader onload function is an asynchronous function so we wait for promise.
-				if (reader.readAsBinaryString) {
-					reader.onload = function (e) {
-						data= e.target.result;
-						//reading excel file in binary format
-						var workbook = XLSX.read(data, {
-							type: 'binary'
-						});
-						xcelData=data;
-						//checking if sheet exists
-						for (let x of workbook.SheetNames){
-							if( x.toLowerCase() === ($('#sheet-no').val().toLowerCase()) ){
-								sheet_name=x;
-								flag=true; 
-							}
-						}
-						resolve(flag);
-					}
-					reader.readAsBinaryString(fileUpload.files[0]);
-				}
-			}).then(function(result) {
-				return result;
-			});			
-		}
-		function searchTxt(){
-			var workbook = XLSX.read(xcelData, {
-				type: 'binary'
-			});
-			var json_object;
-			var txt=$('#search-tb').val().toLowerCase();
-			var NoOfRows=0;
-		//	workbook.SheetNames.forEach(function(sheetName) { //if we want to check in aLL sheets we use this for Loop
-				// Here is your object
-				var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheet_name]);
-				json_object = JSON.stringify(XL_row_object);// Converting JSON-encoded string to JS object
-				var jsonObj = JSON.parse(json_object);
-				if(Object.keys(jsonObj).length!=0){
-					var objKeys = Object.keys(jsonObj);
-					for(var i = 0; i < objKeys.length; i++)
-					{
-						var objValue = Object.values(jsonObj[i]);
-						var str;
-						for(var j = 0; j < objValue.length; j++){
-							str=objValue[j].toLowerCase();
-							if(str.includes(txt)){
-								console.log(str);
-								getRow(i,jsonObj,NoOfRows);
-								NoOfRows++;
-							}
-							<!-- if(txt==jsonObj[i][objKeys[j]]){ -->
-								<!-- getRow(i,jsonObj,NoOfRows); -->
-								<!-- NoOfRows++; -->
-							<!-- } -->
-						}
-					}
-				}else{
-					alert("Sheet is empty");
-				}
-		//	});
-		}
-		function getRow(row,jsonObj,NoOfRows){
-			$('#export').css('visibility', 'visible'); 
-			var objKeys = Object.keys(jsonObj[0]);
-			var objValue = Object.values(jsonObj[row]);
-			// add table header
-			//if(NoOfRows==0){
-			//	for(var j = 0; j < objKeys.length; j++){
-			//		$("#dataTbl").append("<td><b>"+objKeys[j]+"</b></td>");
-			//	}
-			//}
-			//table header is not being added because it is assumed that column heading is in the first row but if it is in another row after some headings it will not get correct data.
-	
-			$("#dataTbl").append("<tr style='padding:0%;'></tr>");
-			// add table rows
-			for(var j = 0; j < objValue.length; j++){
-				//adding row in a table
-				$("#dataTbl").append("<td>"+objValue[j]+"</td>");
-			}			
-		}
-		
-		/* HTML to Microsoft Word Export Demo 
-		* This code demonstrates how to export an html element to Microsoft Word
-		* with CSS styles to set page orientation and paper size.
-		* Tested with Word 2010, 2013 and FireFox, Chrome, Opera, IE10-11
-		* Fails in legacy browsers (IE<10) that lack window.Blob object
-		code from https://stackoverflow.com/questions/36330859/export-html-table-as-word-file-and-change-file-orientation/36337284
-		*/
-		
-		window.export.onclick = function() {
-			if (!window.Blob) {
-				alert('Your legacy browser does not support this action.');
-			return;
-			}
-			var html, link, blob, url, css;
-			// EU A4 use: size: 841.95pt 595.35pt;
-			// US Letter use: size:11.0in 8.5in; 
-			css = (
-				'<style>' +
-				'@page WordDoc{size: 841.95pt 595.35pt;mso-page-orientation: portrait;}' +
-				'div.WordDoc {page: WordDoc;}' +
-				'table{border-collapse:collapse;}td{border:1px gray solid;width:5em;padding:2px;}'+
-				'</style>'
-			);
-			html = window.docx.innerHTML;
-			blob = new Blob(['\ufeff', css + html], {
-				type: 'application/msword'
-			});
-			url = URL.createObjectURL(blob);
-			link = document.createElement('A');
-			link.href = url;
-			// Set default file name. 
-			// Word will append file extension - do not add an extension here.
-			link.download = 'Report';   
-			document.body.appendChild(link);
-			if (navigator.msSaveOrOpenBlob ) navigator.msSaveOrOpenBlob( blob, 'Document.doc'); // IE10-11
-			else link.click();  // other browsers
-			document.body.removeChild(link);
-		};	
-		
-	</script>
 	
 </html> 
 
